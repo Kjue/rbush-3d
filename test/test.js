@@ -11,14 +11,15 @@ function sortedEqual(t, a, b, compare) {
 }
 
 function defaultCompare(a, b) {
-    return (a.minX - b.minX) || (a.minY - b.minY) || (a.maxX - b.maxX) || (a.maxY - b.maxY);
+    return (a.minX - b.minX) || (a.minY - b.minY) || (a.minZ - b.minZ) ||
+           (a.maxX - b.maxX) || (a.maxY - b.maxY) || (a.maxZ - b.maxZ);
 }
 
 function someData(n) {
     var data = [];
 
     for (var i = 0; i < n; i++) {
-        data.push({minX: i, minY: i, maxX: i, maxY: i});
+        data.push({minX: i, minY: i, minZ: 0, maxX: i, maxY: i, maxZ: 0});
     }
     return data;
 }
@@ -27,8 +28,10 @@ function arrToBBox(arr) {
     return {
         minX: arr[0],
         minY: arr[1],
+        minZ: 0,
         maxX: arr[2],
-        maxY: arr[3]
+        maxY: arr[3],
+        maxZ: 0
     };
 }
 
@@ -45,9 +48,9 @@ var emptyData = [[-Infinity, -Infinity, Infinity, Infinity],[-Infinity, -Infinit
     [-Infinity, -Infinity, Infinity, Infinity],[-Infinity, -Infinity, Infinity, Infinity]].map(arrToBBox);
 
 t('constructor accepts a format argument to customize the data format', function (t) {
-    var tree = rbush(4, ['.minLng', '.minLat', '.maxLng', '.maxLat']);
-    t.same(tree.toBBox({minLng: 1, minLat: 2, maxLng: 3, maxLat: 4}),
-        {minX: 1, minY: 2, maxX: 3, maxY: 4});
+    var tree = rbush(4, ['.minXX', '.minYY', '.minZZ', '.maxXX', '.maxYY', '.maxZZ']);
+    t.same(tree.toBBox({minXX: 1, minYY: 2, minZZ: 3, maxXX: 4, maxYY: 5, maxZZ: 6}),
+        {minX: 1, minY: 2, minZ: 3, maxX: 4, maxY: 5, maxZ: 6});
     t.end();
 });
 
@@ -65,58 +68,63 @@ t('#toBBox, #compareMinX, #compareMinY can be overriden to allow custom data str
     var tree = rbush(4);
     tree.toBBox = function (item) {
         return {
-            minX: item.minLng,
-            minY: item.minLat,
-            maxX: item.maxLng,
-            maxY: item.maxLat
+            minX: item.minXX,
+            minY: item.minYY,
+            minZ: item.minZZ,
+            maxX: item.maxXX,
+            maxY: item.maxYY,
+            maxZ: item.maxZZ
         };
     };
     tree.compareMinX = function (a, b) {
-        return a.minLng - b.minLng;
+        return a.minXX - b.minXX;
     };
     tree.compareMinY = function (a, b) {
-        return a.minLat - b.minLat;
+        return a.minYY - b.minYY;
+    };
+    tree.compareMinZ = function (a, b) {
+        return a.minZZ - b.minZZ;
     };
 
     var data = [
-        {minLng: -115, minLat:  45, maxLng: -105, maxLat:  55},
-        {minLng:  105, minLat:  45, maxLng:  115, maxLat:  55},
-        {minLng:  105, minLat: -55, maxLng:  115, maxLat: -45},
-        {minLng: -115, minLat: -55, maxLng: -105, maxLat: -45}
+        {minXX: -115, minYY:  45, minZZ: 0, maxXX: -105, maxYY:  55, maxZZ: 0},
+        {minXX:  105, minYY:  45, minZZ: 0, maxXX:  115, maxYY:  55, maxZZ: 0},
+        {minXX:  105, minYY: -55, minZZ: 0, maxXX:  115, maxYY: -45, maxZZ: 0},
+        {minXX: -115, minYY: -55, minZZ: 0, maxXX: -105, maxYY: -45, maxZZ: 0}
     ];
 
     tree.load(data);
 
-    function byLngLat(a, b) {
-        return a.minLng - b.minLng || a.minLat - b.minLat;
+    function byXXYYZZ(a, b) {
+        return a.minXX - b.minXX || a.minYY - b.minYY || a.minZZ - b.minZZ;
     }
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, maxX: 180, maxY: 90}), [
-        {minLng: -115, minLat:  45, maxLng: -105, maxLat:  55},
-        {minLng:  105, minLat:  45, maxLng:  115, maxLat:  55},
-        {minLng:  105, minLat: -55, maxLng:  115, maxLat: -45},
-        {minLng: -115, minLat: -55, maxLng: -105, maxLat: -45}
-    ], byLngLat);
+    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: 0, maxX: 180, maxY: 90, maxZ: 0}), [
+        {minXX: -115, minYY:  45, minZZ: 0, maxXX: -105, maxYY:  55, maxZZ: 0},
+        {minXX:  105, minYY:  45, minZZ: 0, maxXX:  115, maxYY:  55, maxZZ: 0},
+        {minXX:  105, minYY: -55, minZZ: 0, maxXX:  115, maxYY: -45, maxZZ: 0},
+        {minXX: -115, minYY: -55, minZZ: 0, maxXX: -105, maxYY: -45, maxZZ: 0}
+    ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, maxX: 0, maxY: 90}), [
-        {minLng: -115, minLat:  45, maxLng: -105, maxLat:  55},
-        {minLng: -115, minLat: -55, maxLng: -105, maxLat: -45}
-    ], byLngLat);
+    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: 0, maxX: 0, maxY: 90, maxZ: 0}), [
+        {minXX: -115, minYY:  45, minZZ: 0, maxXX: -105, maxYY:  55, maxZZ: 0},
+        {minXX: -115, minYY: -55, minZZ: 0, maxXX: -105, maxYY: -45, maxZZ: 0}
+    ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: 0, minY: -90, maxX: 180, maxY: 90}), [
-        {minLng: 105, minLat:  45, maxLng: 115, maxLat:  55},
-        {minLng: 105, minLat: -55, maxLng: 115, maxLat: -45}
-    ], byLngLat);
+    sortedEqual(t, tree.search({minX: 0, minY: -90, minZ: 0, maxX: 180, maxY: 90, maxZ: 0}), [
+        {minXX: 105, minYY:  45, minZZ: 0, maxXX: 115, maxYY:  55, maxZZ: 0},
+        {minXX: 105, minYY: -55, minZZ: 0, maxXX: 115, maxYY: -45, maxZZ: 0}
+    ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: 0, maxX: 180, maxY: 90}), [
-        {minLng: -115, minLat: 45, maxLng: -105, maxLat: 55},
-        {minLng:  105, minLat: 45, maxLng:  115, maxLat: 55}
-    ], byLngLat);
+    sortedEqual(t, tree.search({minX: -180, minY: 0, minZ: 0, maxX: 180, maxY: 90, maxZ: 0}), [
+        {minXX: -115, minYY: 45,  minZZ: 0,maxXX: -105, maxYY: 55, maxZZ: 0},
+        {minXX:  105, minYY: 45,  minZZ: 0,maxXX:  115, maxYY: 55, maxZZ: 0}
+    ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, maxX: 180, maxY: 0}), [
-        {minLng:  105, minLat: -55, maxLng:  115, maxLat: -45},
-        {minLng: -115, minLat: -55, maxLng: -105, maxLat: -45}
-    ], byLngLat);
+    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: 0, maxX: 180, maxY: 0, maxZ: 0}), [
+        {minXX:  105, minYY: -55, minZZ: 0, maxXX:  115, maxYY: -45, maxZZ: 0},
+        {minXX: -115, minYY: -55, minZZ: 0, maxXX: -105, maxYY: -45, maxZZ: 0}
+    ], byXXYYZZ);
 
     t.end();
 });
@@ -208,7 +216,7 @@ t('#load properly merges data of smaller or bigger tree heights', function (t) {
 t('#search finds matching points in the tree given a bbox', function (t) {
 
     var tree = rbush(4).load(data);
-    var result = tree.search({minX: 40, minY: 20, maxX: 80, maxY: 70});
+    var result = tree.search({minX: 40, minY: 20, minZ: 0, maxX: 80, maxY: 70, maxZ: 0});
 
     sortedEqual(t, result, [
         [70,20,70,20],[75,25,75,25],[45,45,45,45],[50,50,50,50],[60,60,60,60],[70,70,70,70],
@@ -221,7 +229,7 @@ t('#search finds matching points in the tree given a bbox', function (t) {
 t('#collides returns true when search finds matching points', function (t) {
 
     var tree = rbush(4).load(data);
-    var result = tree.collides({minX: 40, minY: 20, maxX: 80, maxY: 70});
+    var result = tree.collides({minX: 40, minY: 20, minZ: 0, maxX: 80, maxY: 70, maxZ: 0});
 
     t.same(result, true);
 
@@ -248,7 +256,7 @@ t('#all returns all points in the tree', function (t) {
     var result = tree.all();
 
     sortedEqual(t, result, data);
-    sortedEqual(t, tree.search({minX: 0, minY: 0, maxX: 100, maxY: 100}), data);
+    sortedEqual(t, tree.search({minX: 0, minY: 0, minZ: 0, maxX: 100, maxY: 100, maxZ: 0}), data);
 
     t.end();
 });
@@ -349,7 +357,7 @@ t('#remove brings the tree to a clear state when removing everything one by one'
 t('#remove accepts an equals function', function (t) {
     var tree = rbush(4).load(data);
 
-    var item = {minX: 20, minY: 70, maxX: 20, maxY: 70, foo: 'bar'};
+    var item = {minX: 20, minY: 70, minZ: 0, maxX: 20, maxY: 70, maxZ: 0, foo: 'bar'};
 
     tree.insert(item);
     tree.remove(JSON.parse(JSON.stringify(item)), function (a, b) {

@@ -180,6 +180,7 @@ rbush.prototype = {
 
     compareMinX: compareNodeMinX,
     compareMinY: compareNodeMinY,
+    compareMinZ: compareNodeMinZ,
 
     toJSON: function () { return this.data; },
 
@@ -226,9 +227,10 @@ rbush.prototype = {
 
         // split the items into M mostly square tiles
 
-        var N2 = Math.ceil(N / M),
-            N1 = N2 * Math.ceil(Math.sqrt(M)),
-            i, j, right2, right3;
+        var N3 = Math.ceil(N / M),
+            N2 = N3 * Math.ceil(Math.pow(M, 2 / 3)),
+            N1 = N3 * Math.ceil(Math.pow(M, 1 / 3)),
+            i, j, k, right2, right3, right4;
 
         multiSelect(items, left, right, N1, this.compareMinX);
 
@@ -242,8 +244,15 @@ rbush.prototype = {
 
                 right3 = Math.min(j + N2 - 1, right2);
 
-                // pack each entry recursively
-                node.children.push(this._build(items, j, right3, height - 1));
+                multiSelect(items, j, right3, N3, this.compareMinZ);
+
+                for (k = j; k <= right3; k += N3) {
+
+                    right4 = Math.min(k + N3 - 1, right3);
+
+                    // pack each entry recursively
+                    node.children.push(this._build(items, k, right4, height - 1));
+                }
             }
         }
 
@@ -254,30 +263,30 @@ rbush.prototype = {
 
     _chooseSubtree: function (bbox, node, level, path) {
 
-        var i, len, child, targetNode, area, enlargement, minArea, minEnlargement;
+        var i, len, child, targetNode, volume, enlargement, minVolume, minEnlargement;
 
         while (true) {
             path.push(node);
 
             if (node.leaf || path.length - 1 === level) break;
 
-            minArea = minEnlargement = Infinity;
+            minVolume = minEnlargement = Infinity;
 
             for (i = 0, len = node.children.length; i < len; i++) {
                 child = node.children[i];
-                area = bboxArea(child);
-                enlargement = enlargedArea(bbox, child) - area;
+                volume = bboxVolume(child);
+                enlargement = enlargedVolume(bbox, child) - volume;
 
-                // choose entry with the least area enlargement
+                // choose entry with the least volume enlargement
                 if (enlargement < minEnlargement) {
                     minEnlargement = enlargement;
-                    minArea = area < minArea ? area : minArea;
+                    minVolume = volume < minVolume ? volume : minVolume;
                     targetNode = child;
 
                 } else if (enlargement === minEnlargement) {
-                    // otherwise choose one with the smallest area
-                    if (area < minArea) {
-                        minArea = area;
+                    // otherwise choose one with the smallest volume
+                    if (volume < minVolume) {
+                        minVolume = volume;
                         targetNode = child;
                     }
                 }
@@ -346,28 +355,28 @@ rbush.prototype = {
 
     _chooseSplitIndex: function (node, m, M) {
 
-        var i, bbox1, bbox2, overlap, area, minOverlap, minArea, index;
+        var i, bbox1, bbox2, overlap, volume, minOverlap, minVolume, index;
 
-        minOverlap = minArea = Infinity;
+        minOverlap = minVolume = Infinity;
 
         for (i = m; i <= M - m; i++) {
             bbox1 = distBBox(node, 0, i, this.toBBox);
             bbox2 = distBBox(node, i, M, this.toBBox);
 
-            overlap = intersectionArea(bbox1, bbox2);
-            area = bboxArea(bbox1) + bboxArea(bbox2);
+            overlap = intersectionVolume(bbox1, bbox2);
+            volume = bboxVolume(bbox1) + bboxVolume(bbox2);
 
             // choose distribution with minimum overlap
             if (overlap < minOverlap) {
                 minOverlap = overlap;
                 index = i;
 
-                minArea = area < minArea ? area : minArea;
+                minVolume = volume < minVolume ? volume : minVolume;
 
             } else if (overlap === minOverlap) {
-                // otherwise choose distribution with minimum area
-                if (area < minArea) {
-                    minArea = area;
+                // otherwise choose distribution with minimum volume
+                if (volume < minVolume) {
+                    minVolume = volume;
                     index = i;
                 }
             }
@@ -381,12 +390,19 @@ rbush.prototype = {
 
         var compareMinX = node.leaf ? this.compareMinX : compareNodeMinX,
             compareMinY = node.leaf ? this.compareMinY : compareNodeMinY,
+            compareMinZ = node.leaf ? this.compareMinZ : compareNodeMinZ,
             xMargin = this._allDistMargin(node, m, M, compareMinX),
-            yMargin = this._allDistMargin(node, m, M, compareMinY);
+            yMargin = this._allDistMargin(node, m, M, compareMinY),
+            zMargin = this._allDistMargin(node, m, M, compareMinZ);
 
         // if total distributions margin value is minimal for x, sort by minX,
-        // otherwise it's already sorted by minY
-        if (xMargin < yMargin) node.children.sort(compareMinX);
+        // if total distributions margin value is minimal for y, sort by minY,
+        // otherwise it's already sorted by minZ
+        if (xMargin < yMargin && xMargin < zMargin) {
+            node.children.sort(compareMinX);
+        } else if (yMargin < xMargin && yMargin < zMargin) {
+            node.children.sort(compareMinY);
+        }
     },
 
     // total margin of all possible split distributions where each node is at least m full
@@ -437,7 +453,7 @@ rbush.prototype = {
     },
 
     _initFormat: function (format) {
-        // data format (minX, minY, maxX, maxY accessors)
+        // data format (minX, minY, minZ, maxX, maxY, maxZ accessors)
 
         // uses eval-type function compilation instead of just accepting a toBBox function
         // because the algorithms are very sensitive to sorting functions performance,
@@ -447,12 +463,15 @@ rbush.prototype = {
 
         this.compareMinX = new Function('a', 'b', compareArr.join(format[0]));
         this.compareMinY = new Function('a', 'b', compareArr.join(format[1]));
+        this.compareMinZ = new Function('a', 'b', compareArr.join(format[2]));
 
         this.toBBox = new Function('a',
             'return {minX: a' + format[0] +
             ', minY: a' + format[1] +
-            ', maxX: a' + format[2] +
-            ', maxY: a' + format[3] + '};');
+            ', minZ: a' + format[2] +
+            ', maxX: a' + format[3] +
+            ', maxY: a' + format[4] +
+            ', maxZ: a' + format[5] + '};');
     }
 };
 
@@ -475,8 +494,10 @@ function distBBox(node, k, p, toBBox, destNode) {
     if (!destNode) destNode = createNode(null);
     destNode.minX = Infinity;
     destNode.minY = Infinity;
+    destNode.minZ = Infinity;
     destNode.maxX = -Infinity;
     destNode.maxY = -Infinity;
+    destNode.maxZ = -Infinity;
 
     for (var i = k, child; i < p; i++) {
         child = node.children[i];
@@ -489,44 +510,69 @@ function distBBox(node, k, p, toBBox, destNode) {
 function extend(a, b) {
     a.minX = Math.min(a.minX, b.minX);
     a.minY = Math.min(a.minY, b.minY);
+    a.minZ = Math.min(a.minZ, b.minZ);
     a.maxX = Math.max(a.maxX, b.maxX);
     a.maxY = Math.max(a.maxY, b.maxY);
+    a.maxZ = Math.max(a.maxZ, b.maxZ);
     return a;
 }
 
 function compareNodeMinX(a, b) { return a.minX - b.minX; }
 function compareNodeMinY(a, b) { return a.minY - b.minY; }
+function compareNodeMinZ(a, b) { return a.minZ - b.minZ; }
 
-function bboxArea(a)   { return (a.maxX - a.minX) * (a.maxY - a.minY); }
-function bboxMargin(a) { return (a.maxX - a.minX) + (a.maxY - a.minY); }
-
-function enlargedArea(a, b) {
-    return (Math.max(b.maxX, a.maxX) - Math.min(b.minX, a.minX)) *
-           (Math.max(b.maxY, a.maxY) - Math.min(b.minY, a.minY));
+function bboxVolume(a)   {
+    return (a.maxX - a.minX) *
+           (a.maxY - a.minY) *
+           (a.maxZ - a.minZ);
 }
 
-function intersectionArea(a, b) {
+function bboxMargin(a) {
+    return (a.maxX - a.minX) + (a.maxY - a.minY) + (a.maxZ - a.minZ);
+}
+
+function enlargedVolume(a, b) {
+    var minX = Math.min(a.minX, b.minX),
+        minY = Math.min(a.minY, b.minY),
+        minZ = Math.min(a.minZ, b.minZ),
+        maxX = Math.max(a.maxX, b.maxX),
+        maxY = Math.max(a.maxY, b.maxY),
+        maxZ = Math.max(a.maxZ, b.maxZ);
+
+    return (maxX - minX) *
+           (maxY - minY) *
+           (maxZ - minZ);
+}
+
+function intersectionVolume(a, b) {
     var minX = Math.max(a.minX, b.minX),
         minY = Math.max(a.minY, b.minY),
+        minZ = Math.max(a.minZ, b.minZ),
         maxX = Math.min(a.maxX, b.maxX),
-        maxY = Math.min(a.maxY, b.maxY);
+        maxY = Math.min(a.maxY, b.maxY),
+        maxZ = Math.min(a.maxZ, b.maxZ);
 
     return Math.max(0, maxX - minX) *
-           Math.max(0, maxY - minY);
+           Math.max(0, maxY - minY) *
+           Math.max(0, maxZ - minZ);
 }
 
 function contains(a, b) {
     return a.minX <= b.minX &&
            a.minY <= b.minY &&
+           a.minZ <= b.minZ &&
            b.maxX <= a.maxX &&
-           b.maxY <= a.maxY;
+           b.maxY <= a.maxY &&
+           b.maxZ <= a.maxZ;
 }
 
 function intersects(a, b) {
     return b.minX <= a.maxX &&
            b.minY <= a.maxY &&
+           b.minZ <= a.maxZ &&
            b.maxX >= a.minX &&
-           b.maxY >= a.minY;
+           b.maxY >= a.minY &&
+           b.maxZ >= a.minZ;
 }
 
 function createNode(children) {
@@ -536,8 +582,10 @@ function createNode(children) {
         leaf: true,
         minX: Infinity,
         minY: Infinity,
+        minZ: Infinity,
         maxX: -Infinity,
-        maxY: -Infinity
+        maxY: -Infinity,
+        maxZ: -Infinity
     };
 }
 
