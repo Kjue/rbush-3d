@@ -1,12 +1,12 @@
 'use strict';
 
-module.exports = rbush;
-module.exports.default = rbush;
+module.exports = rbush3d;
+module.exports.default = rbush3d;
 
 var quickselect = require('quickselect');
 
-function rbush(maxEntries, format) {
-    if (!(this instanceof rbush)) return new rbush(maxEntries, format);
+function rbush3d(maxEntries, format) {
+    if (!(this instanceof rbush3d)) return new rbush3d(maxEntries, format);
 
     // max entries in a node is 9 by default; min node fill is 40% for best performance
     this._maxEntries = Math.max(4, maxEntries || 9);
@@ -19,7 +19,7 @@ function rbush(maxEntries, format) {
     this.clear();
 }
 
-rbush.prototype = {
+rbush3d.prototype = {
 
     all: function () {
         return this._all(this.data, []);

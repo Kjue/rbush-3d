@@ -1,5 +1,5 @@
 var Benchmark = require('benchmark'),
-    rbush = require('../rbush'),
+    rbush3d = require('../rbush3d'),
     genData = require('./gendata');
 
 var RTree = require('rtree');
@@ -13,7 +13,7 @@ var data2 = genData.convert(data);
 
 new Benchmark.Suite()
 .add('insert ' + N + ' items (' + maxFill + ' node size)', function () {
-    var tree = rbush(maxFill);
+    var tree = rbush3d(maxFill);
     for (var i = 0; i < N; i++) {
         tree.insert(data[i]);
     }

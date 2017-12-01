@@ -2,7 +2,7 @@
 
 /*eslint key-spacing: 0, comma-spacing: 0 */
 
-var rbush = require('..'),
+var rbush3d = require('..'),
     t = require('tape');
 
 function sortedEqual(t, a, b, compare) {
@@ -107,24 +107,24 @@ var emptyData = [
 ].map(arrToBBox);
 
 t('constructor accepts a format argument to customize the data format', function (t) {
-    var tree = rbush(4, ['.minXX', '.minYY', '.minZZ', '.maxXX', '.maxYY', '.maxZZ']);
+    var tree = rbush3d(4, ['.minXX', '.minYY', '.minZZ', '.maxXX', '.maxYY', '.maxZZ']);
     t.same(tree.toBBox({minXX: 1, minYY: 2, minZZ: 3, maxXX: 4, maxYY: 5, maxZZ: 6}),
         arrToBBox([1, 2, 3, 4, 5, 6]));
     t.end();
 });
 
 t('constructor uses 9 max entries by default', function (t) {
-    var tree = rbush().load(someData(9));
+    var tree = rbush3d().load(someData(9));
     t.equal(tree.toJSON().height, 1);
 
-    var tree2 = rbush().load(someData(10));
+    var tree2 = rbush3d().load(someData(10));
     t.equal(tree2.toJSON().height, 2);
     t.end();
 });
 
 t('#toBBox, #compareMinX, #compareMinY can be overriden to allow custom data structures', function (t) {
 
-    var tree = rbush(4);
+    var tree = rbush3d(4);
     tree.toBBox = function (item) {
         return {
             minX: item.minXX,
@@ -209,7 +209,7 @@ t('#toBBox, #compareMinX, #compareMinY can be overriden to allow custom data str
 
 t('#load bulk-loads the given data given max node entries and forms a proper search tree', function (t) {
 
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
     sortedEqual(t, tree.all(), data);
 
     t.end();
@@ -217,11 +217,11 @@ t('#load bulk-loads the given data given max node entries and forms a proper sea
 
 t('#load uses standard insertion when given a low number of items', function (t) {
 
-    var tree = rbush(8)
+    var tree = rbush3d(8)
         .load(data)
         .load(data.slice(0, 3));
 
-    var tree2 = rbush(8)
+    var tree2 = rbush3d(8)
         .load(data)
         .insert(data[0])
         .insert(data[1])
@@ -232,14 +232,14 @@ t('#load uses standard insertion when given a low number of items', function (t)
 });
 
 t('#load does nothing if loading empty data', function (t) {
-    var tree = rbush().load([]);
+    var tree = rbush3d().load([]);
 
-    t.same(tree.toJSON(), rbush().toJSON());
+    t.same(tree.toJSON(), rbush3d().toJSON());
     t.end();
 });
 
 t('#load handles the insertion of maxEntries + 2 empty bboxes', function (t) {
-    var tree = rbush(10)
+    var tree = rbush3d(10)
         .load(emptyData);
 
     t.equal(tree.toJSON().height, 2);
@@ -249,7 +249,7 @@ t('#load handles the insertion of maxEntries + 2 empty bboxes', function (t) {
 });
 
 t('#insert handles the insertion of maxEntries + 2 empty bboxes', function (t) {
-    var tree = rbush(10);
+    var tree = rbush3d(10);
 
     emptyData.forEach(function (datum) {
         tree.insert(datum);
@@ -262,7 +262,7 @@ t('#insert handles the insertion of maxEntries + 2 empty bboxes', function (t) {
 });
 
 t('#load properly splits tree root when merging trees of the same height', function (t) {
-    var tree = rbush(4)
+    var tree = rbush3d(4)
         .load(data)
         .load(data);
 
@@ -275,11 +275,11 @@ t('#load properly splits tree root when merging trees of the same height', funct
 t('#load properly merges data of smaller or bigger tree heights', function (t) {
     var smaller = someData(10);
 
-    var tree1 = rbush(4)
+    var tree1 = rbush3d(4)
         .load(data)
         .load(smaller);
 
-    var tree2 = rbush(4)
+    var tree2 = rbush3d(4)
         .load(smaller)
         .load(data);
 
@@ -293,7 +293,7 @@ t('#load properly merges data of smaller or bigger tree heights', function (t) {
 
 t('#search finds matching points in the tree given a bbox', function (t) {
 
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
     var bbox = arrToBBox([40, 20, 90, 80, 70, 90]);
     var result = tree.search(bbox);
     var expectedResult = bfSearch(bbox, data);
@@ -303,7 +303,7 @@ t('#search finds matching points in the tree given a bbox', function (t) {
 
 t('#collides returns true when search finds matching points', function (t) {
 
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
     var result = tree.collides(arrToBBox([40, 20, 10, 80, 70, 90]));
 
     t.same(result, true);
@@ -312,14 +312,14 @@ t('#collides returns true when search finds matching points', function (t) {
 });
 
 t('#search returns an empty array if nothing found', function (t) {
-    var result = rbush(4).load(data).search(arrToBBox([200, 200, 200, 210, 210, 210]));
+    var result = rbush3d(4).load(data).search(arrToBBox([200, 200, 200, 210, 210, 210]));
 
     t.same(result, []);
     t.end();
 });
 
 t('#collides returns false if nothing found', function (t) {
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
     var result = tree.collides(arrToBBox([200, 200, 200, 210, 210, 210]));
     var result2 = tree.collides(arrToBBox([2, 2, 2, 3, 3, 3]));
 
@@ -330,7 +330,7 @@ t('#collides returns false if nothing found', function (t) {
 
 t('#all returns all points in the tree', function (t) {
 
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
     var result = tree.all();
 
     sortedEqual(t, result, data);
@@ -341,8 +341,8 @@ t('#all returns all points in the tree', function (t) {
 
 t('#toJSON & #fromJSON exports and imports search tree in JSON format', function (t) {
 
-    var tree = rbush(4).load(data);
-    var tree2 = rbush(4).fromJSON(tree.data);
+    var tree = rbush3d(4).load(data);
+    var tree2 = rbush3d(4).fromJSON(tree.data);
 
     sortedEqual(t, tree.all(), tree2.all());
     t.end();
@@ -357,7 +357,7 @@ t('#insert adds an item to an existing tree correctly', function (t) {
         [1, 1, 2, 2, 3, 3]
     ].map(arrToBBox);
 
-    var tree = rbush(4).load(items.slice(0, 3));
+    var tree = rbush3d(4).load(items.slice(0, 3));
 
     tree.insert(items[3]);
     t.equal(tree.toJSON().height, 1);
@@ -372,19 +372,19 @@ t('#insert adds an item to an existing tree correctly', function (t) {
 
 t('#insert does nothing if given undefined', function (t) {
     t.same(
-        rbush().load(data),
-        rbush().load(data).insert());
+        rbush3d().load(data),
+        rbush3d().load(data).insert());
     t.end();
 });
 
 t('#insert forms a valid tree if items are inserted one by one', function (t) {
-    var tree = rbush(4);
+    var tree = rbush3d(4);
 
     for (var i = 0; i < data.length; i++) {
         tree.insert(data[i]);
     }
 
-    var tree2 = rbush(4).load(data);
+    var tree2 = rbush3d(4).load(data);
 
     t.ok(tree.toJSON().height - tree2.toJSON().height <= 1);
 
@@ -393,7 +393,7 @@ t('#insert forms a valid tree if items are inserted one by one', function (t) {
 });
 
 t('#remove removes items correctly', function (t) {
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
 
     var len = data.length;
 
@@ -412,28 +412,28 @@ t('#remove removes items correctly', function (t) {
 });
 t('#remove does nothing if nothing found', function (t) {
     t.same(
-        rbush().load(data),
-        rbush().load(data).remove([13, 13, 13, 13, 13, 13]));
+        rbush3d().load(data),
+        rbush3d().load(data).remove([13, 13, 13, 13, 13, 13]));
     t.end();
 });
 t('#remove does nothing if given undefined', function (t) {
     t.same(
-        rbush().load(data),
-        rbush().load(data).remove());
+        rbush3d().load(data),
+        rbush3d().load(data).remove());
     t.end();
 });
 t('#remove brings the tree to a clear state when removing everything one by one', function (t) {
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
 
     for (var i = 0; i < data.length; i++) {
         tree.remove(data[i]);
     }
 
-    t.same(tree.toJSON(), rbush(4).toJSON());
+    t.same(tree.toJSON(), rbush3d(4).toJSON());
     t.end();
 });
 t('#remove accepts an equals function', function (t) {
-    var tree = rbush(4).load(data);
+    var tree = rbush3d(4).load(data);
 
     var item = {minX: 20, minY: 70, minZ: 90, maxX: 20, maxY: 70, maxZ: 90, foo: 'bar'};
 
@@ -448,14 +448,14 @@ t('#remove accepts an equals function', function (t) {
 
 t('#clear should clear all the data in the tree', function (t) {
     t.same(
-        rbush(4).load(data).clear().toJSON(),
-        rbush(4).toJSON());
+        rbush3d(4).load(data).clear().toJSON(),
+        rbush3d(4).toJSON());
     t.end();
 });
 
 t('should have chainable API', function (t) {
     t.doesNotThrow(function () {
-        rbush()
+        rbush3d()
             .load(data)
             .insert(data[0])
             .remove(data[0]);
@@ -469,7 +469,7 @@ t('#search with random data', function (t) {
 
     var randomPoints = randBoxes(POINTS_NUMBER, POINT_SIZE);
     var randomBoxes = randBoxes(BOXEX_NUMBER, BOX_SIZE);
-    var tree = rbush(8).load(randomPoints);
+    var tree = rbush3d(8).load(randomPoints);
 
     randomBoxes.forEach(function (bbox) {
         var result = tree.search(bbox);
@@ -485,7 +485,7 @@ t('#collides with random data', function (t) {
 
     var randomPoints = randBoxes(POINTS_NUMBER, POINT_SIZE);
     var randomBoxes = randBoxes(BOXEX_NUMBER, BOX_SIZE);
-    var tree = rbush(8).load(randomPoints);
+    var tree = rbush3d(8).load(randomPoints);
 
     randomBoxes.forEach(function (bbox) {
         var result = tree.collides(bbox);

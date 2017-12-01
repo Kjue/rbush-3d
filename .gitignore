@@ -1,5 +1,5 @@
 node_modules
 npm-debug.log
 coverage
-rbush.js
-rbush.min.js
+rbush3d.js
+rbush3d.min.js

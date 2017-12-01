@@ -1,5 +1,5 @@
 var Benchmark = require('benchmark'),
-    rbush = require('../rbush'),
+    rbush3d = require('../rbush3d'),
     genData = require('./gendata');
 
 var N = 10000,
@@ -9,7 +9,7 @@ var data = genData(N, 1);
 
 new Benchmark.Suite()
 .add('bulk loading ' + N + ' items (' + maxFill + ' node size)', function () {
-    var tree = rbush(maxFill);
+    var tree = rbush3d(maxFill);
     tree.load(data);
 })
 .on('error', function(event) {

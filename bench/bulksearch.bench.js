@@ -1,5 +1,5 @@
 var Benchmark = require('benchmark'),
-    rbush = require('../rbush'),
+    rbush3d = require('../rbush3d'),
     genData = require('./gendata');
 
 var N = 10000,
@@ -10,7 +10,7 @@ var bboxes100 = genData(1000, 100 * Math.sqrt(0.1));
 var bboxes10 = genData(1000, 10);
 var bboxes1 = genData(1000, 1);
 
-var tree = rbush(maxFill);
+var tree = rbush3d(maxFill);
 tree.load(data);
 
 new Benchmark.Suite()
