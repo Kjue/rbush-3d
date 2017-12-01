@@ -109,7 +109,7 @@ var emptyData = [
 t('constructor accepts a format argument to customize the data format', function (t) {
     var tree = rbush(4, ['.minXX', '.minYY', '.minZZ', '.maxXX', '.maxYY', '.maxZZ']);
     t.same(tree.toBBox({minXX: 1, minYY: 2, minZZ: 3, maxXX: 4, maxYY: 5, maxZZ: 6}),
-        {minX: 1, minY: 2, minZ: 3, maxX: 4, maxY: 5, maxZ: 6});
+        arrToBBox([1, 2, 3, 4, 5, 6]));
     t.end();
 });
 
@@ -162,45 +162,45 @@ t('#toBBox, #compareMinX, #compareMinY can be overriden to allow custom data str
         return a.minXX - b.minXX || a.minYY - b.minYY || a.minZZ - b.minZZ;
     }
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: -50, maxX: 180, maxY: 90, maxZ: 50}),
+    sortedEqual(t, tree.search(arrToBBox([-180, -90,  -50, 180, 90, 50])),
         data, byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: -50, maxX: 0, maxY: 90, maxZ: 0}), [
+    sortedEqual(t, tree.search(arrToBBox([-180, -90,  -50, 0, 90, 0])), [
         {minXX: -115, minYY: -55, minZZ: -35, maxXX: -105, maxYY: -45, maxZZ: -25},
         {minXX: -115, minYY: 45, minZZ: -35, maxXX: -105, maxYY: 55, maxZZ: -25}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: 0, minY: -90, minZ: 0, maxX: 180, maxY: 90, maxZ: 50}), [
+    sortedEqual(t, tree.search(arrToBBox([0, -90,  0, 180, 90, 50])), [
         {minXX: 105, minYY: -55, minZZ: 25, maxXX: 115, maxYY: -45, maxZZ: 35},
         {minXX: 105, minYY: 45, minZZ: 25, maxXX: 115, maxYY: 55, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: 0, minZ: -50, maxX: 180, maxY: 90, maxZ: 0}), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 0,  -50, 180, 90, 0])), [
         {minXX: -115, minYY: 45, minZZ: -35, maxXX: -105, maxYY: 55, maxZZ: -25},
         {minXX: 105, minYY: 45, minZZ: -35, maxXX: 115, maxYY: 55, maxZZ: -25}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: 0, maxX: 180, maxY: 0, maxZ: 50}), [
+    sortedEqual(t, tree.search(arrToBBox([-180, -90,  0, 180, 0, 50])), [
         {minXX: -115, minYY: -55, minZZ: 25, maxXX: -105, maxYY: -45, maxZZ: 35},
         {minXX: 105, minYY: -55, minZZ: 25, maxXX: 115, maxYY: -45, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: 0, maxX: 0, maxY: 90, maxZ: 50}), [
+    sortedEqual(t, tree.search(arrToBBox([-180, -90,  0, 0, 90, 50])), [
         {minXX: -115, minYY: -55, minZZ: 25, maxXX: -105, maxYY: -45, maxZZ: 35},
         {minXX: -115, minYY: 45, minZZ: 25, maxXX: -105, maxYY: 55, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: 0, minY: -90, minZ: -50, maxX: 180, maxY: 90, maxZ: 0}), [
+    sortedEqual(t, tree.search(arrToBBox([0, -90,  -50, 180, 90, 0])), [
         {minXX: 105, minYY: -55, minZZ: -35, maxXX: 115, maxYY: -45, maxZZ: -25},
         {minXX: 105, minYY: 45, minZZ: -35, maxXX: 115, maxYY: 55, maxZZ: -25}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: 0, minZ: 0, maxX: 180, maxY: 90, maxZ: 50}), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 0,  0, 180, 90, 50])), [
         {minXX: -115, minYY: 45, minZZ: 25, maxXX: -105, maxYY: 55, maxZZ: 35},
         {minXX: 105, minYY: 45, minZZ: 25, maxXX: 115, maxYY: 55, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search({minX: -180, minY: -90, minZ: -50, maxX: 180, maxY: 0, maxZ: 0}), [
+    sortedEqual(t, tree.search(arrToBBox([-180, -90,  -50, 180, 0, 0])), [
         {minXX: -115, minYY: -55, minZZ: -35, maxXX: -105, maxYY: -45, maxZZ: -25},
         {minXX: 105, minYY: -55, minZZ: -35, maxXX: 115, maxYY: -45, maxZZ: -25}
     ], byXXYYZZ);
@@ -294,7 +294,7 @@ t('#load properly merges data of smaller or bigger tree heights', function (t) {
 t('#search finds matching points in the tree given a bbox', function (t) {
 
     var tree = rbush(4).load(data);
-    var bbox = {minX: 40, minY: 20, minZ: 90, maxX: 80, maxY: 70, maxZ: 90};
+    var bbox = arrToBBox([40, 20, 90, 80, 70, 90]);
     var result = tree.search(bbox);
     var expectedResult = bfSearch(bbox, data);
     sortedEqual(t, result, expectedResult);
@@ -304,7 +304,7 @@ t('#search finds matching points in the tree given a bbox', function (t) {
 t('#collides returns true when search finds matching points', function (t) {
 
     var tree = rbush(4).load(data);
-    var result = tree.collides({minX: 40, minY: 20, minZ: 10, maxX: 80, maxY: 70, maxZ: 90});
+    var result = tree.collides(arrToBBox([40, 20, 10, 80, 70, 90]));
 
     t.same(result, true);
 
@@ -312,16 +312,19 @@ t('#collides returns true when search finds matching points', function (t) {
 });
 
 t('#search returns an empty array if nothing found', function (t) {
-    var result = rbush(4).load(data).search([200, 200, 200, 210, 210, 210]);
+    var result = rbush(4).load(data).search(arrToBBox([200, 200, 200, 210, 210, 210]));
 
     t.same(result, []);
     t.end();
 });
 
 t('#collides returns false if nothing found', function (t) {
-    var result = rbush(4).load(data).collides([200, 200, 200, 210, 210, 210]);
+    var tree = rbush(4).load(data);
+    var result = tree.collides(arrToBBox([200, 200, 200, 210, 210, 210]));
+    var result2 = tree.collides(arrToBBox([2, 2, 2, 3, 3, 3]));
 
     t.same(result, false);
+    t.same(result2, false);
     t.end();
 });
 
@@ -331,7 +334,7 @@ t('#all returns all points in the tree', function (t) {
     var result = tree.all();
 
     sortedEqual(t, result, data);
-    sortedEqual(t, tree.search({minX: 0, minY: 0, minZ: 0, maxX: 100, maxY: 100, maxZ: 100}), data);
+    sortedEqual(t, tree.search(arrToBBox([0, 0, 0, 100, 100, 100])), data);
 
     t.end();
 });
