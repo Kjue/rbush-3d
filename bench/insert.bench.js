@@ -2,14 +2,14 @@ var Benchmark = require('benchmark'),
     rbush3d = require('../rbush3d'),
     genData = require('./gendata');
 
-var RTree = require('rtree');
+var rbush = require('rbush');
 
 
 var N = 10000,
     maxFill = 16;
 
 var data = genData(N, 1);
-var data2 = genData.convert(data);
+var data2 = genData.convertTo2d(data);
 
 new Benchmark.Suite()
 .add('insert ' + N + ' items (' + maxFill + ' node size)', function () {
@@ -18,10 +18,10 @@ new Benchmark.Suite()
         tree.insert(data[i]);
     }
 })
-.add('insert ' + N + ' items (' + maxFill + ' node size), old RTree', function () {
-    var tree2 = new RTree(maxFill);
+.add('insert ' + N + ' items (' + maxFill + ' node size), rbush(original 2d version)', function () {
+    var tree = rbush(maxFill);
     for (var i = 0; i < N; i++) {
-        tree2.insert(data2[i], i);
+        tree.insert(data[i]);
     }
 })
 .on('error', function(event) {

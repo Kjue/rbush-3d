@@ -3,10 +3,12 @@ module.exports = genData;
 
 function randBox(size) {
     var x = Math.random() * (100 - size),
-        y = Math.random() * (100 - size);
-    return [x, y,
+        y = Math.random() * (100 - size),
+        z = Math.random() * (100 - size);
+    return [x, y, z,
         x + size * Math.random(),
-        y + size * Math.random()];
+        y + size * Math.random(),
+        z + size * Math.random()];
 }
 
 function genData(N, size) {
@@ -17,10 +19,14 @@ function genData(N, size) {
     return data;
 };
 
-genData.convert = function (data) {
-    var result = [];
-    for (var i = 0; i < data.length; i++) {
-        result.push({x: data[i][0], y: data[i][1], w: data[i][2] - data[i][0], h: data[i][3] - data[i][1]});
-    }
-    return result;
+genData.convertTo2d = function (data) {
+    return data.map(function (bbox) {
+        return {
+            minX: bbox.minX,
+            minY: bbox.minY,
+            maxX: bbox.maxX,
+            maxY: bbox.maxY
+        };
+    });
 }
+

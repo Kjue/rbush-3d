@@ -8,12 +8,15 @@ console.log('maxFill: ' + maxFill);
 
 function randBox(size) {
     var x = Math.random() * (100 - size),
-        y = Math.random() * (100 - size);
+        y = Math.random() * (100 - size),
+        z = Math.random() * (100 - size);
     return {
         minX: x,
         minY: y,
+        minZ: z,
         maxX: x + size * Math.random(),
-        maxY: y + size * Math.random()
+        maxY: y + size * Math.random(),
+        maxZ: z + size * Math.random()
     };
 }
 
