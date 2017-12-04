@@ -24,6 +24,7 @@
   "devDependencies": {
     "benchmark": "^2.1.0",
     "browserify": "^14.1.0",
+    "budo": "^10.0.4",
     "eslint": "^3.18.0",
     "eslint-config-mourner": "^2.0.1",
     "faucet": "0.0.1",
@@ -39,7 +40,8 @@
     "cov": "istanbul cover test/test.js -x test/test.js",
     "build": "browserify index.js -s rbush3d -o rbush3d.js",
     "build-min": "browserify index.js -s rbush3d | uglifyjs -c warnings=false -m > rbush3d.min.js",
-    "prepublish": "npm run build && npm run build-min"
+    "prepublish": "npm run build && npm run build-min",
+    "viz": "budo viz/viz3d.js --open"
   },
   "eslintConfig": {
     "extends": "mourner",
