@@ -8,9 +8,9 @@ var quickselect = require('quickselect');
 function rbush3d(maxEntries, format) {
     if (!(this instanceof rbush3d)) return new rbush3d(maxEntries, format);
 
-    // max entries in a node is 9 by default; min node fill is 40% for best performance
-    this._maxEntries = Math.max(4, maxEntries || 9);
-    this._minEntries = Math.max(2, Math.ceil(this._maxEntries * 0.4));
+    // max entries in a node is 16 by default; min node fill is 40% for best performance
+    this._maxEntries = Math.max(8, maxEntries || 16);
+    this._minEntries = Math.max(4, Math.ceil(this._maxEntries * 0.4));
 
     if (format) {
         this._initFormat(format);
