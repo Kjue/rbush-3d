@@ -1,24 +1,11 @@
 RBush-3D
 =====
 
-RBush-3D is 3D version of [RBush](https://github.com/mourner/rbush).
+RBushen is N-dimensional version of [RBush](https://github.com/mourner/rbush). Inspired by the [RBush-3D](https://github.com/Eronana/rbush-3d).
 
-[![Build Status](https://travis-ci.org/Eronana/rbush-3d.svg?branch=master)](https://travis-ci.org/Eronana/rbush-3d)
-[![Coverage Status](https://coveralls.io/repos/github/Eronana/rbush-3d/badge.svg?branch=master)](https://coveralls.io/github/Eronana/rbush-3d?branch=master)
+## Work-in-progress
 
-## TODO
-- [x] real 3D test
-- [ ] Demos
-- [x] Benchmarks
-
-
-## Install
-
-Install with NPM (`npm install rbush-3d`), and Chinese user could use CNPM(`cnpm install rbush-3d`).
-
-Or use CDN links for browsers:
-[rbush3d.js](https://unpkg.com/rbush-3d@0.0.2/rbush3d.js),
-[rbush3d.min.js](https://unpkg.com/rbush-3d@0.0.2/rbush3d.min.js)
+This project is a work-in-progress. I was inspired by the RBush-3d that implemented one more dimension to the 2D version. I thought it useful to allow for as many dimensions as one might want. I am thinking of adding Parallel.js to this mix too, but first things first. I'm switching XYZ parameters to be free variables and calling them just indexed vectors. I intend the usage to follow that of the previous examples.
 
 ## Usage
 
