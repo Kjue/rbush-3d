@@ -1,4 +1,4 @@
-RBush-3D
+RBushen
 =====
 
 RBushen is N-dimensional version of [RBush](https://github.com/mourner/rbush). Inspired by the [RBush-3D](https://github.com/Eronana/rbush-3d).

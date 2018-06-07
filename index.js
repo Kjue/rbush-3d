@@ -395,9 +395,9 @@ rbush3d.prototype = {
             yMargin = this._allDistMargin(node, m, M, compareMinY),
             zMargin = this._allDistMargin(node, m, M, compareMinZ);
 
-        // if total distributions margin value is minimal for x, sort by minX,
-        // if total distributions margin value is minimal for y, sort by minY,
-        // otherwise it's already sorted by minZ
+        // if total distributions margin value is minimal for x, sort by min0,
+        // if total distributions margin value is minimal for y, sort by min1,
+        // otherwise it's already sorted by min2
         if (xMargin < yMargin && xMargin < zMargin) {
             node.children.sort(compareMinX);
         } else if (yMargin < xMargin && yMargin < zMargin) {
@@ -453,7 +453,7 @@ rbush3d.prototype = {
     },
 
     _initFormat: function (format) {
-        // data format (minX, minY, minZ, maxX, maxY, maxZ accessors)
+        // data format (min0, min1, min2, max0, max1, max2 accessors)
 
         // uses eval-type function compilation instead of just accepting a toBBox function
         // because the algorithms are very sensitive to sorting functions performance,
@@ -462,16 +462,17 @@ rbush3d.prototype = {
         var compareArr = ['return a', ' - b', ';'];
 
         this.compareMinX = new Function('a', 'b', compareArr.join(format[0]));
-        this.compareMinY = new Function('a', 'b', compareArr.join(format[1]));
-        this.compareMinZ = new Function('a', 'b', compareArr.join(format[2]));
+        this.compareMinY = new Function('a', 'b', compareArr.join(format[2]));
+        this.compareMinZ = new Function('a', 'b', compareArr.join(format[4]));
 
         this.toBBox = new Function('a',
-            'return {minX: a' + format[0] +
-            ', minY: a' + format[1] +
-            ', minZ: a' + format[2] +
-            ', maxX: a' + format[3] +
-            ', maxY: a' + format[4] +
-            ', maxZ: a' + format[5] + '};');
+            'return' +
+            '{ min0: a' + format[0] +
+            ', max0: a' + format[1] +
+            ', min1: a' + format[2] +
+            ', max1: a' + format[3] +
+            ', min2: a' + format[4] +
+            ', max2: a' + format[5] + '};');
     }
 };
 
@@ -492,12 +493,12 @@ function calcBBox(node, toBBox) {
 // min bounding rectangle of node children from k to p-1
 function distBBox(node, k, p, toBBox, destNode) {
     if (!destNode) destNode = createNode(null);
-    destNode.minX = Infinity;
-    destNode.minY = Infinity;
-    destNode.minZ = Infinity;
-    destNode.maxX = -Infinity;
-    destNode.maxY = -Infinity;
-    destNode.maxZ = -Infinity;
+    destNode.min0 = Infinity;
+    destNode.max0 = -Infinity;
+    destNode.min1 = Infinity;
+    destNode.max1 = -Infinity;
+    destNode.min2 = Infinity;
+    destNode.max2 = -Infinity;
 
     for (var i = k, child; i < p; i++) {
         child = node.children[i];
@@ -508,71 +509,71 @@ function distBBox(node, k, p, toBBox, destNode) {
 }
 
 function extend(a, b) {
-    a.minX = Math.min(a.minX, b.minX);
-    a.minY = Math.min(a.minY, b.minY);
-    a.minZ = Math.min(a.minZ, b.minZ);
-    a.maxX = Math.max(a.maxX, b.maxX);
-    a.maxY = Math.max(a.maxY, b.maxY);
-    a.maxZ = Math.max(a.maxZ, b.maxZ);
+    a.min0 = Math.min(a.min0, b.min0);
+    a.max0 = Math.max(a.max0, b.max0);
+    a.min1 = Math.min(a.min1, b.min1);
+    a.max1 = Math.max(a.max1, b.max1);
+    a.min2 = Math.min(a.min2, b.min2);
+    a.max2 = Math.max(a.max2, b.max2);
     return a;
 }
 
-function compareNodeMinX(a, b) { return a.minX - b.minX; }
-function compareNodeMinY(a, b) { return a.minY - b.minY; }
-function compareNodeMinZ(a, b) { return a.minZ - b.minZ; }
+function compareNodeMinX(a, b) { return a.min0 - b.min0; }
+function compareNodeMinY(a, b) { return a.min1 - b.min1; }
+function compareNodeMinZ(a, b) { return a.min2 - b.min2; }
 
 function bboxVolume(a)   {
-    return (a.maxX - a.minX) *
-           (a.maxY - a.minY) *
-           (a.maxZ - a.minZ);
+    return (a.max0 - a.min0) *
+           (a.max1 - a.min1) *
+           (a.max2 - a.min2);
 }
 
 function bboxMargin(a) {
-    return (a.maxX - a.minX) + (a.maxY - a.minY) + (a.maxZ - a.minZ);
+    return (a.max0 - a.min0) + (a.max1 - a.min1) + (a.max2 - a.min2);
 }
 
 function enlargedVolume(a, b) {
-    var minX = Math.min(a.minX, b.minX),
-        minY = Math.min(a.minY, b.minY),
-        minZ = Math.min(a.minZ, b.minZ),
-        maxX = Math.max(a.maxX, b.maxX),
-        maxY = Math.max(a.maxY, b.maxY),
-        maxZ = Math.max(a.maxZ, b.maxZ);
+    var min0 = Math.min(a.min0, b.min0),
+        max0 = Math.max(a.max0, b.max0),
+        min1 = Math.min(a.min1, b.min1),
+        max1 = Math.max(a.max1, b.max1),
+        min2 = Math.min(a.min2, b.min2),
+        max2 = Math.max(a.max2, b.max2);
 
-    return (maxX - minX) *
-           (maxY - minY) *
-           (maxZ - minZ);
+    return (max0 - min0) *
+           (max1 - min1) *
+           (max2 - min2);
 }
 
 function intersectionVolume(a, b) {
-    var minX = Math.max(a.minX, b.minX),
-        minY = Math.max(a.minY, b.minY),
-        minZ = Math.max(a.minZ, b.minZ),
-        maxX = Math.min(a.maxX, b.maxX),
-        maxY = Math.min(a.maxY, b.maxY),
-        maxZ = Math.min(a.maxZ, b.maxZ);
+    var min0 = Math.max(a.min0, b.min0),
+        max0 = Math.min(a.max0, b.max0),
+        min1 = Math.max(a.min1, b.min1),
+        max1 = Math.min(a.max1, b.max1),
+        min2 = Math.max(a.min2, b.min2),
+        max2 = Math.min(a.max2, b.max2);
 
-    return Math.max(0, maxX - minX) *
-           Math.max(0, maxY - minY) *
-           Math.max(0, maxZ - minZ);
+    return Math.max(0, max0 - min0) *
+           Math.max(0, max1 - min1) *
+           Math.max(0, max2 - min2);
 }
 
 function contains(a, b) {
-    return a.minX <= b.minX &&
-           a.minY <= b.minY &&
-           a.minZ <= b.minZ &&
-           b.maxX <= a.maxX &&
-           b.maxY <= a.maxY &&
-           b.maxZ <= a.maxZ;
+    return a.min0 <= b.min0 &&
+           b.max0 <= a.max0 &&
+           a.min1 <= b.min1 &&
+           b.max1 <= a.max1 &&
+           a.min2 <= b.min2 &&
+           b.max2 <= a.max2;
 }
 
 function intersects(a, b) {
-    return b.minX <= a.maxX &&
-           b.minY <= a.maxY &&
-           b.minZ <= a.maxZ &&
-           b.maxX >= a.minX &&
-           b.maxY >= a.minY &&
-           b.maxZ >= a.minZ;
+    return b.min0 <= a.max0 &&
+           b.max0 >= a.min0 &&
+           b.min1 <= a.max1 &&
+           b.max1 >= a.min1 &&
+           b.min2 <= a.max2 &&
+           b.max2 >= a.min2;
 }
 
 function createNode(children) {
@@ -580,12 +581,12 @@ function createNode(children) {
         children: children,
         height: 1,
         leaf: true,
-        minX: Infinity,
-        minY: Infinity,
-        minZ: Infinity,
-        maxX: -Infinity,
-        maxY: -Infinity,
-        maxZ: -Infinity
+        min0: Infinity,
+        max0: -Infinity,
+        min1: Infinity,
+        max1: -Infinity,
+        min2: Infinity,
+        max2: -Infinity
     };
 }
 

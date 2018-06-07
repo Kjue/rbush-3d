@@ -5,56 +5,149 @@
 var rbush3d = require('..'),
     t = require('tape');
 
+t.createStream().pipe(process.stdout);
+
 function sortedEqual(t, a, b, compare) {
     compare = compare || defaultCompare;
     t.same(a.slice().sort(compare), b.slice().sort(compare));
 }
 
 function defaultCompare(a, b) {
-    return (a.minX - b.minX) || (a.minY - b.minY) || (a.minZ - b.minZ) ||
-           (a.maxX - b.maxX) || (a.maxY - b.maxY) || (a.maxZ - b.maxZ);
+    return (a.min0 - b.min0) || (a.min1 - b.min1) || (a.min2 - b.min2) ||
+           (a.max0 - b.max0) || (a.max1 - b.max1) || (a.max2 - b.max2);
 }
 
 function someData(n) {
     var data = [];
 
     for (var i = 0; i < n; i++) {
-        data.push({minX: i, minY: i, minZ: 0, maxX: i, maxY: i, maxZ: 0});
+        data.push({min0: i, max0: i, min1: i, max1: i, min2: 0, max2: 0});
     }
     return data;
 }
 
 function arrToBBox(arr) {
     return {
-        minX: arr[0],
-        minY: arr[1],
-        minZ: arr[2],
-        maxX: arr[3],
-        maxY: arr[4],
-        maxZ: arr[5]
+        min0: arr[0],
+        max0: arr[1],
+        min1: arr[2],
+        max1: arr[3],
+        min2: arr[4],
+        max2: arr[5]
     };
 }
 
-var data = [[0,0,0,0,0,0],[10,10,10,10,10,10],[20,20,20,20,20,20],[25,0,0,25,0,0],[35,10,5,35,10,5],
-    [45,20,10,45,20,10],[0,25,50,0,25,50],[10,35,60,10,35,60],[20,45,30,20,45,30],[25,25,25,25,25,25],
-    [35,35,35,35,35,35],[45,45,45,45,45,45],[50,0,25,50,0,25],[60,10,30,60,10,30],[70,20,30,70,20,30],
-    [75,0,10,75,0,10],[85,10,60,85,10,60],[95,20,0,95,20,0],[50,25,20,50,25,20],[60,35,50,60,35,50],
-    [70,45,70,70,45,70],[75,25,45,75,25,45],[85,35,15,85,35,15],[95,45,5,95,45,5],[0,50,0,0,50,0],
-    [10,60,80,10,60,80],[20,70,40,20,70,40],[25,50,20,25,50,20],[35,60,55,35,60,55],[45,70,35,45,70,35],
-    [0,75,30,0,75,30],[10,85,50,10,85,50],[20,95,25,20,95,25],[25,75,45,25,75,45],[35,85,50,35,85,50],
-    [45,95,15,45,95,15],[50,50,50,50,50,50],[60,60,60,60,60,60],[70,70,70,70,70,70],[75,50,30,75,50,30],
-    [85,60,30,85,60,30],[95,70,45,95,70,45],[50,75,20,50,75,20],[60,85,65,60,85,65],[70,95,85,70,95,85],
-    [75,75,75,75,75,75],[85,85,85,85,85,85],[95,95,95,95,95,95]
+var data = [
+    [0.,0.,0.,0.,0.,0.],
+    [10,10,10,10,10,10],
+    [20,20,20,20,20,20],
+    [25,25,0.,0.,0.,0.],
+    [35,35,10,10,5.,5.],
+    [45,45,20,20,10,10],
+    [0.,0.,25,25,50,50],
+    [10,10,35,35,60,60],
+    [20,20,45,45,30,30],
+    [25,25,25,25,25,25],
+    [35,35,35,35,35,35],
+    [45,45,45,45,45,45],
+    [50,50,0.,0.,25,25],
+    [60,60,10,10,30,30],
+    [70,70,20,20,30,30],
+    [75,75,0.,0.,10,10],
+    [85,85,10,10,60,60],
+    [95,95,20,20,0.,0.],
+    [50,50,25,25,20,20],
+    [60,60,35,35,50,50],
+    [70,70,45,45,70,70],
+    [75,75,25,25,45,45],
+    [85,85,35,35,15,15],
+    [95,95,45,45,5.,5.],
+    [0.,0.,50,50,0.,0.],
+    [10,10,60,60,80,80],
+    [20,20,70,70,40,40],
+    [25,25,50,50,20,20],
+    [35,35,60,60,55,55],
+    [45,45,70,70,35,35],
+    [0.,0.,75,75,30,30],
+    [10,10,85,85,50,50],
+    [20,20,95,95,25,25],
+    [25,25,75,75,45,45],
+    [35,35,85,85,50,50],
+    [45,45,95,95,15,15],
+    [50,50,50,50,50,50],
+    [60,60,60,60,60,60],
+    [70,70,70,70,70,70],
+    [75,75,50,50,30,30],
+    [85,85,60,60,30,30],
+    [95,95,70,70,45,45],
+    [50,50,75,75,20,20],
+    [60,60,85,85,65,65],
+    [70,70,95,95,85,85],
+    [75,75,75,75,75,75],
+    [85,85,85,85,85,85],
+    [95,95,95,95,95,95]
 ].map(arrToBBox);
+
+// var data = [
+//     [0.,0.,0.,0.,0.,0.],
+//     [10,10,10,10,10,10],
+//     [20,20,20,20,20,20],
+//     [25,25,0.,0.,0.,0.],
+//     [35,35,10,10,5.,5.],
+//     [45,45,20,20,10,10],
+//     [0.,0.,25,25,50,50],
+//     [10,10,35,35,60,60],
+//     [20,20,45,45,30,30],
+//     [25,25,25,25,25,25],
+//     [35,35,35,35,35,35],
+//     [45,45,45,45,45,45],
+//     [50,50,0.,0.,25,25],
+//     [60,60,10,10,30,30],
+//     [70,70,20,20,30,30],
+//     [75,75,0.,0.,10,10],
+//     [85,85,10,10,60,60],
+//     [95,95,20,20,0.,0.],
+//     [50,50,25,25,20,20],
+//     [60,60,35,35,50,50],
+//     [70,70,45,45,70,70],
+//     [75,75,25,25,45,45],
+//     [85,85,35,35,15,15],
+//     [95,95,45,45,5.,5.],
+//     [0.,0.,50,50,0.,0.],
+//     [10,10,60,60,80,80],
+//     [20,20,70,70,40,40],
+//     [25,25,50,50,20,20],
+//     [35,35,60,60,55,55],
+//     [45,45,70,70,35,35],
+//     [0 ,0 ,75,75,30,30],
+//     [10,10,85,85,50,50],
+//     [20,20,95,95,25,25],
+//     [25,25,75,75,45,45],
+//     [35,35,85,85,50,50],
+//     [45,45,95,95,15,15],
+//     [50,50,50,50,50,50],
+//     [60,60,60,60,60,60],
+//     [70,70,70,70,70,70],
+//     [75,75,50,50,30,30],
+//     [85,85,60,60,30,30],
+//     [95,95,70,70,45,45],
+//     [50,50,75,75,20,20],
+//     [60,60,85,85,65,65],
+//     [70,70,95,95,85,85],
+//     [75,75,75,75,75,75],
+//     [85,85,85,85,85,85],
+//     [95,95,95,95,95,95]
+// ].map(arrToBBox);
+
 
 
 function intersects(a, b) {
-    return b.minX <= a.maxX &&
-            b.minY <= a.maxY &&
-            b.minZ <= a.maxZ &&
-            b.maxX >= a.minX &&
-            b.maxY >= a.minY &&
-            b.maxZ >= a.minZ;
+    return  b.min0 <= a.max0 &&
+            b.max0 >= a.min0 &&
+            b.min1 <= a.max1 &&
+            b.max1 >= a.min1 &&
+            b.min2 <= a.max2 &&
+            b.max2 >= a.min2;
 }
 
 function bfSearch(bbox, data) {
@@ -74,12 +167,12 @@ function randBox(size) {
         y = Math.random() * (2 - size) - 1,
         z = Math.random() * (2 - size) - 1;
     return {
-        minX: x,
-        minY: y,
-        minZ: z,
-        maxX: x + size * Math.random(),
-        maxY: y + size * Math.random(),
-        maxZ: z + size * Math.random()
+        min0: x,
+        max0: x + size * Math.random(),
+        min1: y,
+        max1: y + size * Math.random(),
+        min2: z,
+        max2: z + size * Math.random()
     };
 }
 
@@ -92,21 +185,21 @@ function randBoxes(number, size) {
 }
 
 var emptyData = [
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
-    [-Infinity, -Infinity, -Infinity, Infinity, Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
+    [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity],
 ].map(arrToBBox);
 
 t('constructor accepts a format argument to customize the data format', function (t) {
-    var tree = rbush3d(8, ['.minXX', '.minYY', '.minZZ', '.maxXX', '.maxYY', '.maxZZ']);
-    t.same(tree.toBBox({minXX: 1, minYY: 2, minZZ: 3, maxXX: 4, maxYY: 5, maxZZ: 6}),
+    var tree = rbush3d(8, ['.minXX', '.maxXX', '.minYY', '.maxYY', '.minZZ', '.maxZZ']);
+    t.same(tree.toBBox({minXX: 1, maxXX: 2, minYY: 3, maxYY: 4, minZZ: 5, maxZZ: 6}),
         arrToBBox([1, 2, 3, 4, 5, 6]));
     t.end();
 });
@@ -125,12 +218,12 @@ t('#toBBox, #compareMinX, #compareMinY can be overriden to allow custom data str
     var tree = rbush3d(8);
     tree.toBBox = function (item) {
         return {
-            minX: item.minXX,
-            minY: item.minYY,
-            minZ: item.minZZ,
-            maxX: item.maxXX,
-            maxY: item.maxYY,
-            maxZ: item.maxZZ
+            min0: item.minXX,
+            max0: item.maxXX,
+            min1: item.minYY,
+            max1: item.maxYY,
+            min2: item.minZZ,
+            max2: item.maxZZ
         };
     };
     tree.compareMinX = function (a, b) {
@@ -143,15 +236,16 @@ t('#toBBox, #compareMinX, #compareMinY can be overriden to allow custom data str
         return a.minZZ - b.minZZ;
     };
 
+    // TODO: Ordering should not matter here but check none the same.
     var data = [
-        {minXX: -115, minYY:  45, minZZ:  25, maxXX: -105, maxYY:  55, maxZZ:  35},
-        {minXX:  105, minYY:  45, minZZ:  25, maxXX:  115, maxYY:  55, maxZZ:  35},
-        {minXX:  105, minYY: -55, minZZ:  25, maxXX:  115, maxYY: -45, maxZZ:  35},
-        {minXX: -115, minYY: -55, minZZ:  25, maxXX: -105, maxYY: -45, maxZZ:  35},
-        {minXX: -115, minYY:  45, minZZ: -35, maxXX: -105, maxYY:  55, maxZZ: -25},
-        {minXX:  105, minYY:  45, minZZ: -35, maxXX:  115, maxYY:  55, maxZZ: -25},
-        {minXX:  105, minYY: -55, minZZ: -35, maxXX:  115, maxYY: -45, maxZZ: -25},
-        {minXX: -115, minYY: -55, minZZ: -35, maxXX: -105, maxYY: -45, maxZZ: -25}
+        {minXX: -115, maxXX: -105, minYY:  45, maxYY:  55, minZZ:  25, maxZZ:  35},
+        {minXX:  105, maxXX:  115, minYY:  45, maxYY:  55, minZZ:  25, maxZZ:  35},
+        {minXX:  105, maxXX:  115, minYY: -55, maxYY: -45, minZZ:  25, maxZZ:  35},
+        {minXX: -115, maxXX: -105, minYY: -55, maxYY: -45, minZZ:  25, maxZZ:  35},
+        {minXX: -115, maxXX: -105, minYY:  45, maxYY:  55, minZZ: -35, maxZZ: -25},
+        {minXX:  105, maxXX:  115, minYY:  45, maxYY:  55, minZZ: -35, maxZZ: -25},
+        {minXX:  105, maxXX:  115, minYY: -55, maxYY: -45, minZZ: -35, maxZZ: -25},
+        {minXX: -115, maxXX: -105, minYY: -55, maxYY: -45, minZZ: -35, maxZZ: -25}
     ];
 
     tree.load(data);
@@ -160,45 +254,45 @@ t('#toBBox, #compareMinX, #compareMinY can be overriden to allow custom data str
         return a.minXX - b.minXX || a.minYY - b.minYY || a.minZZ - b.minZZ;
     }
 
-    sortedEqual(t, tree.search(arrToBBox([-180, -90,  -50, 180, 90, 50])),
+    sortedEqual(t, tree.search(arrToBBox([-180, 180, -90, 90, -50, 50])),
         data, byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([-180, -90,  -50, 0, 90, 0])), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 0, -90,  90, -50, 0])), [
         {minXX: -115, minYY: -55, minZZ: -35, maxXX: -105, maxYY: -45, maxZZ: -25},
         {minXX: -115, minYY: 45, minZZ: -35, maxXX: -105, maxYY: 55, maxZZ: -25}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([0, -90,  0, 180, 90, 50])), [
+    sortedEqual(t, tree.search(arrToBBox([0, 180, -90, 90, 0, 50])), [
         {minXX: 105, minYY: -55, minZZ: 25, maxXX: 115, maxYY: -45, maxZZ: 35},
         {minXX: 105, minYY: 45, minZZ: 25, maxXX: 115, maxYY: 55, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([-180, 0,  -50, 180, 90, 0])), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 180, 0, 90, -50, 0])), [
         {minXX: -115, minYY: 45, minZZ: -35, maxXX: -105, maxYY: 55, maxZZ: -25},
         {minXX: 105, minYY: 45, minZZ: -35, maxXX: 115, maxYY: 55, maxZZ: -25}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([-180, -90,  0, 180, 0, 50])), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 180, -90, 0, 0, 50])), [
         {minXX: -115, minYY: -55, minZZ: 25, maxXX: -105, maxYY: -45, maxZZ: 35},
         {minXX: 105, minYY: -55, minZZ: 25, maxXX: 115, maxYY: -45, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([-180, -90,  0, 0, 90, 50])), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 0, -90, 90, 0, 50])), [
         {minXX: -115, minYY: -55, minZZ: 25, maxXX: -105, maxYY: -45, maxZZ: 35},
         {minXX: -115, minYY: 45, minZZ: 25, maxXX: -105, maxYY: 55, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([0, -90,  -50, 180, 90, 0])), [
+    sortedEqual(t, tree.search(arrToBBox([0, 180, -90, 90, -50, 0])), [
         {minXX: 105, minYY: -55, minZZ: -35, maxXX: 115, maxYY: -45, maxZZ: -25},
         {minXX: 105, minYY: 45, minZZ: -35, maxXX: 115, maxYY: 55, maxZZ: -25}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([-180, 0,  0, 180, 90, 50])), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 180, 0, 90, 0, 50])), [
         {minXX: -115, minYY: 45, minZZ: 25, maxXX: -105, maxYY: 55, maxZZ: 35},
         {minXX: 105, minYY: 45, minZZ: 25, maxXX: 115, maxYY: 55, maxZZ: 35}
     ], byXXYYZZ);
 
-    sortedEqual(t, tree.search(arrToBBox([-180, -90,  -50, 180, 0, 0])), [
+    sortedEqual(t, tree.search(arrToBBox([-180, 180, -90, 0, -50, 0])), [
         {minXX: -115, minYY: -55, minZZ: -35, maxXX: -105, maxYY: -45, maxZZ: -25},
         {minXX: 105, minYY: -55, minZZ: -35, maxXX: 115, maxYY: -45, maxZZ: -25}
     ], byXXYYZZ);
@@ -305,7 +399,7 @@ t('#search finds matching points in the tree given a bbox', function (t) {
 t('#collides returns true when search finds matching points', function (t) {
 
     var tree = rbush3d(8).load(data);
-    var result = tree.collides(arrToBBox([40, 20, 10, 80, 70, 90]));
+    var result = tree.collides(arrToBBox([40, 80, 20, 70, 10, 90]));
 
     t.same(result, true);
 
@@ -335,7 +429,7 @@ t('#all returns all points in the tree', function (t) {
     var result = tree.all();
 
     sortedEqual(t, result, data);
-    sortedEqual(t, tree.search(arrToBBox([0, 0, 0, 100, 100, 100])), data);
+    sortedEqual(t, tree.search(arrToBBox([0, 100, 0, 100, 0, 100])), data);
 
     t.end();
 });
@@ -357,9 +451,9 @@ t('#insert adds an item to an existing tree correctly', function (t) {
         [3, 3, 3, 3, 3, 3],
         [4, 4, 4, 4, 4, 4],
         [5, 5, 5, 5, 5, 5],
-        [1, 1, 2, 2, 3, 3],
-        [2, 2, 3, 3, 4, 4],
-        [3, 3, 4, 4, 5, 5],
+        [1, 2, 1, 3, 2, 3],
+        [2, 3, 2, 4, 3, 4],
+        [3, 4, 3, 5, 4, 5],
     ].map(arrToBBox);
 
     var tree = rbush3d(8).load(items.slice(0, 7));
@@ -441,7 +535,7 @@ t('#remove brings the tree to a clear state when removing everything one by one'
 t('#remove accepts an equals function', function (t) {
     var tree = rbush3d(8).load(data);
 
-    var item = {minX: 20, minY: 70, minZ: 90, maxX: 20, maxY: 70, maxZ: 90, foo: 'bar'};
+    var item = {min0: 20, max0: 20, min1: 70, max1: 70, min2: 90, max2: 90, foo: 'bar'};
 
     tree.insert(item);
     tree.remove(JSON.parse(JSON.stringify(item)), function (a, b) {
@@ -501,7 +595,7 @@ t('#search with random data', function (t) {
 
 t('#collides with random data', function (t) {
     var POINT_SIZE = 100000, BOX_SIZE = 1000;
-    var POINTS_NUMBER = 100000, BOXEX_NUMBER = 10000;
+    var POINTS_NUMBER = 100000, BOXEX_NUMBER = 1000;
 
     var randomPoints = randBoxes(POINTS_NUMBER, POINT_SIZE);
     var randomBoxes = randBoxes(BOXEX_NUMBER, BOX_SIZE);
