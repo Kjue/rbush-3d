@@ -178,6 +178,7 @@ rbush3d.prototype = {
 
     toBBox: function (item) { return item; },
 
+    compareVectors: [compareNodeMinX, compareNodeMinY, compareNodeMinZ],
     compareMinX: compareNodeMinX,
     compareMinY: compareNodeMinY,
     compareMinZ: compareNodeMinZ,
@@ -225,36 +226,32 @@ rbush3d.prototype = {
         node.leaf = false;
         node.height = height;
 
-        // split the items into M mostly square tiles
+        let l = this.compareVectors.length;
+        let dimensions = [];
+        dimensions.unshift(Math.ceil(N / M));
+        let counters = [];
+        this.compareVectors.forEach((vector, index) => {
+            if (dimensions.length < l)
+                dimensions.unshift(dimensions[index] * Math.ceil(Math.pow(M, (l - index) / l)));
+            counters.push(0);
+        });
 
-        var N3 = Math.ceil(N / M),
-            N2 = N3 * Math.ceil(Math.pow(M, 2 / 3)),
-            N1 = N3 * Math.ceil(Math.pow(M, 1 / 3)),
-            i, j, k, right2, right3, right4;
+        const lastIndex = dimensions.length - 1;
+        const deeper = (depth, ii, ll, rr) => {
+            let dim = dimensions[depth];
+            multiSelect(items, ll, rr, dim, this.compareVectors[depth]);
 
-        multiSelect(items, left, right, N1, this.compareMinX);
+            for (counters[depth] = ll; counters[depth] <= rr; counters[depth] += dim) {
 
-        for (i = left; i <= right; i += N1) {
+                let newRight = Math.min(counters[depth] + dim - 1, rr);
 
-            right2 = Math.min(i + N1 - 1, right);
-
-            multiSelect(items, i, right2, N2, this.compareMinY);
-
-            for (j = i; j <= right2; j += N2) {
-
-                right3 = Math.min(j + N2 - 1, right2);
-
-                multiSelect(items, j, right3, N3, this.compareMinZ);
-
-                for (k = j; k <= right3; k += N3) {
-
-                    right4 = Math.min(k + N3 - 1, right3);
-
-                    // pack each entry recursively
-                    node.children.push(this._build(items, k, right4, height - 1));
-                }
+                if (depth < lastIndex)
+                    deeper(depth + 1, ii, counters[depth], newRight);
+                else
+                    node.children.push(this._build(items, counters[depth], newRight, height - 1));
             }
-        }
+        };
+        deeper(0, 0, left, right);
 
         calcBBox(node, this.toBBox);
 
@@ -461,18 +458,19 @@ rbush3d.prototype = {
 
         var compareArr = ['return a', ' - b', ';'];
 
+        var bboxFunc = 'return {';
+        this.compareVectors = [];
+        format.forEach((vector, index) => {
+            this.compareVectors.push(new Function('a', 'b', compareArr.join(vector)));
+            bboxFunc += (!index ? '' : ', ') + (index % 2 ? 'max' : 'min') + Math.floor(index / 2) + ': a' + vector;
+        });
+        bboxFunc += '};';
+
         this.compareMinX = new Function('a', 'b', compareArr.join(format[0]));
         this.compareMinY = new Function('a', 'b', compareArr.join(format[2]));
         this.compareMinZ = new Function('a', 'b', compareArr.join(format[4]));
 
-        this.toBBox = new Function('a',
-            'return' +
-            '{ min0: a' + format[0] +
-            ', max0: a' + format[1] +
-            ', min1: a' + format[2] +
-            ', max1: a' + format[3] +
-            ', min2: a' + format[4] +
-            ', max2: a' + format[5] + '};');
+        this.toBBox = new Function('a', bboxFunc);
     }
 };
 
