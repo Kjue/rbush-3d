@@ -1,42 +1,51 @@
 'use strict';
 
-var N = 1000000,
-    maxFill = 16;
+// Dimensions
+const DIM = 3;
+// Substitute for dimensional distance.
+const N = 1000000;
+// Maximum fill for rbushen.
+const maxFill = 16;
 
 console.log('number: ' + N);
 console.log('maxFill: ' + maxFill);
 
-function randBox(size) {
-    var x = Math.random() * (100 - size),
-        y = Math.random() * (100 - size),
-        z = Math.random() * (100 - size);
-    return {
-        minX: x,
-        minY: y,
-        minZ: z,
-        maxX: x + size * Math.random(),
-        maxY: y + size * Math.random(),
-        maxZ: z + size * Math.random()
-    };
+var format = [];
+for (let i = 0; i < DIM; i++) {
+    format.push('.min' + i);
+    format.push('.max' + i);
 }
 
-function genData(N, size) {
+function genData(N, size, dim) {
+    let g = '';
+    for (let i = 0; i < dim; i++) {
+        g += 'var _' + i + ' = Math.random() * (100 - ' + size + ');\n';
+    }
+    g += 'return {\n';
+    for (let i = 0; i < dim; i++) {
+        g += '\tmin' + i + ': _' + i + ',\n';
+        g += '\tmax' + i + ': _' + i + '+' + size + ' * Math.random(),\n';
+    }
+    g += '};';
+
+    let f = new Function(g);
+
     var data = [];
     for (var i = 0; i < N; i++) {
-        data.push(randBox(size));
+        data.push(f());
     }
     return data;
 }
 
-var data = genData(N, 1);
-var data2 = genData(N, 1);
-var bboxes100 = genData(1000, 100 * Math.sqrt(0.1));
-var bboxes10 = genData(1000, 10);
-var bboxes1 = genData(1000, 1);
+var data = genData(N, 1, DIM);
+var data2 = genData(N, 1, DIM);
+var bboxes100 = genData(1000, 100 * Math.sqrt(0.1), DIM);
+var bboxes10 = genData(1000, 10, DIM);
+var bboxes1 = genData(1000, 1, DIM);
 
 var rbush3d = typeof require !== 'undefined' ? require('..') : rbush3d;
 
-var tree = rbush3d(maxFill);
+var tree = rbush3d(maxFill, format);
 
 console.time('insert one by one');
 for (var i = 0; i < N; i++) {
