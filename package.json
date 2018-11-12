@@ -1,11 +1,11 @@
 {
-  "name": "rbush-3d",
-  "version": "0.0.2",
-  "description": "High-performance 3D spatial index for cuboids (based on R*-tree with bulk loading and bulk insertion algorithms)",
-  "homepage": "https://github.com/eronana/rbush-3d",
+  "name": "rbushen",
+  "version": "0.1.0",
+  "description": "High-performance N-D spatial index for cuboids of arbitral dimensions (based on R*-tree with bulk loading and bulk insertion algorithms)",
+  "homepage": "https://github.com/kjue/rbushen",
   "repository": {
     "type": "git",
-    "url": "git://github.com/eronana/rbush-3d.git"
+    "url": "git://github.com/kjue/rbushen.git"
   },
   "keywords": [
     "spatial",
@@ -15,9 +15,9 @@
     "index",
     "math"
   ],
-  "author": "Vladimir Agafonkin",
+  "author": "Vladimir Agafonkin, Eronana, Mikael Lavi",
   "contributors": [
-    "Eronana"
+    "Mikael Lavi"
   ],
   "license": "MIT",
   "main": "index.js",
@@ -40,8 +40,8 @@
     "perf": "node ./bench/perf.js",
     "cov": "istanbul cover test/test.js -x test/test.js",
     "coveralls": "npm run cov -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
-    "build": "browserify index.js -s rbush3d -o rbush3d.js",
-    "build-min": "browserify index.js -s rbush3d | uglifyjs -c warnings=false -m > rbush3d.min.js",
+    "build": "browserify index.js -s rbushen -o rbushen.js",
+    "build-min": "browserify index.js -s rbushen | uglifyjs -c warnings=false -m > rbushen.min.js",
     "prepublish": "npm run build && npm run build-min",
     "viz": "budo viz/viz3d.js --open"
   },
