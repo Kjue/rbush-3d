@@ -1,4 +1,8 @@
 {
-  "editor.tabSize": 4,
-  "editor.insertSpaces": true
+    "eslint.enable": true,
+    "editor.formatOnSave": true,
+    "eslint.validate": ["javascript"],
+    "eslint.run": "onType",
+    "eslint.autoFixOnSave": true,
+    "prettier.eslintIntegration": true
 }
