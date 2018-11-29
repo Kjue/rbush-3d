@@ -178,10 +178,13 @@ t('vector extend works', function(t) {
     var box0 = { min0: -2, max0: -Infinity },
         box1 = { min0: -1, max0: 3 },
         box2 = { min0: -2, max0: 3 },
-        vec0 = new Vector()
+        box3 = { min0: Infinity, max0: -Infinity },
+        vec0 = new Vector(),
+        large = vec0.extend({}, {})
 
     t.same(vec0.extend(box0, box1), box2)
     t.same(box0, box2)
+    t.same(large, box3, 'Empty boxes yield empty boxes')
     t.end()
 })
 
@@ -206,13 +209,20 @@ t('node extend works along all specified vectors', function(t) {
         vec0 = new Vector('.min0', '.max0'),
         vec1 = new Vector('.min1', '.max1'),
         vec2 = new Vector('.min2', '.max2'),
-        node0 = new Node(box0, [vec0, vec1, vec2])
+        node0 = new Node([vec0, vec1, vec2]),
+        node1 = new Node([vec0, vec1, vec2], [box1])
 
+    // Boxes are modified in these operations as they are the source items.
     node0.extend(box0, box1)
     node0.extend(boxEmpty, box1)
 
     t.same(box0, box2)
     t.same(boxEmpty, box1)
+
+    node1.extend(box2)
+    t.notSame(box1, box2, 'Nodes maintain their own bounding boxes, original untouched')
+    t.same(node1.bbox, box2)
+
     t.end()
 })
 
@@ -224,7 +234,7 @@ t('node intersect works along all specified vectors', function(t) {
         vec0 = new Vector('.min0', '.max0'),
         vec1 = new Vector('.min1', '.max1'),
         vec2 = new Vector('.min2', '.max2'),
-        node0 = new Node(box0, [vec0, vec1, vec2])
+        node0 = new Node([vec0, vec1, vec2], [box0])
 
     node0.intersect(box0, box1)
     node0.intersect(box0, box2)
@@ -243,7 +253,7 @@ t('node volume works', function(t) {
         vec0 = new Vector('.min0', '.max0'),
         vec1 = new Vector('.min1', '.max1'),
         vec2 = new Vector('.min2', '.max2'),
-        node0 = new Node(box0, [vec0, vec1, vec2])
+        node0 = new Node([vec0, vec1, vec2], [box0])
 
     t.same(node0.volume(), volume)
     t.end()
@@ -255,7 +265,7 @@ t('node volume works', function(t) {
         vec0 = new Vector('.min0', '.max0'),
         vec1 = new Vector('.min1', '.max1'),
         vec2 = new Vector('.min2', '.max2'),
-        node0 = new Node(box0, [vec0, vec1, vec2])
+        node0 = new Node([vec0, vec1, vec2], [box0])
 
     t.same(node0.bboxMargin(), margin)
     t.end()
@@ -287,7 +297,7 @@ t('node provides bounding boxes', function(t) {
     var box0 = { min0: -1, max0: 2 },
         box1 = { min0: -1, max0: 2 },
         vec0 = new Vector('.min0', '.max0'),
-        node0 = new Node(box0, [vec0])
+        node0 = new Node([vec0], [box0])
 
     t.same(node0.bbox, box1)
     t.end()
@@ -298,11 +308,12 @@ t('node bounding boxes extend with children', function(t) {
         box1 = { min0: 0, max0: 2 },
         box2 = { min0: 0, max0: 3 },
         vec0 = new Vector('.min0', '.max0'),
-        node0 = new Node(box0, [vec0], [box1, box2]),
-        node1 = new Node(box0, [vec0], [box1, box2])
+        node0 = new Node([vec0], [box0, box1, box2]),
+        node1 = new Node([vec0], [box0, box1, box2])
 
-    t.same(node0.calcBBox(0, 1), box1)
-    t.same(node0.calcBBox(1, 2), box2)
+    t.same(node0.calcBBox(0, 1), box0)
+    t.same(node0.calcBBox(1, 2), box1)
+    t.same(node0.calcBBox(2, 3), box2)
     t.same(node1.calcBBox(), box2)
 
     t.end()
@@ -315,17 +326,66 @@ t('node enlarged volume works', function(t) {
         box2 = { min0: 0, max0: 3, min1: 0, max1: 0 },
         vec0 = new Vector('.min0', '.max0'),
         vec1 = new Vector('.min1', '.max1'),
-        node0 = new Node(box0, [vec0]),
-        node1 = new Node(box0, [vec0, vec1])
+        node0 = new Node([vec0]),
+        node1 = new Node([vec0, vec1], [box0])
 
     // This set only looks at vec0 and volume is 3
     t.same(node0.enlargedVolume(box0, box1), node0.volume(box1))
+    t.same(node0.enlargedVolume(box1, box2), node0.volume(box2))
+    // Adding a child does not hinder capacity to calculate specified metrics
+    node0.children.push(box0)
+    t.same(node0.enlargedVolume(box0, box1), node0.volume(box1))
+    t.same(node0.enlargedVolume(node0.bbox, box1), node0.volume(box1))
     t.same(node0.enlargedVolume(box1, box2), node0.volume(box2))
     // This set looks at both vec0 and vec1 and volume is 0
     t.same(node1.enlargedVolume(box0, box1), node1.volume(box1))
     t.same(node1.enlargedVolume(box1, box2), node1.volume(box2))
 
     t.same(box0, box00, 'Enlarged volume does not modify the original')
+
+    t.end()
+})
+
+t('bush empty constructor works', function(t) {
+    t.doesNotEqual(new rbushen(), void 0)
+    t.end()
+})
+
+t('bush vectors define nodes vectors', function(t) {
+    var vec0 = new Vector('.min0', '.max0'),
+        vec1 = new Vector('.min1', '.max1'),
+        bush = new rbushen()
+
+    bush.pushVector(vec0)
+    bush.pushVector(vec1)
+    t.same(bush._root.vectors.length, 2, 'Node vectors follow bush vectors.')
+
+    t.end()
+})
+
+t('bush insert works', function(t) {
+    var bush = new rbushen(16, ['.min0', '.max0', '.min1', '.max1', '.min2', '.max2'])
+
+    data.forEach((item) => {
+        bush.insert(item)
+    })
+
+    console.log(JSON.stringify(bush, null, '\t'))
+
+    t.end()
+})
+
+t('node split axis works', function(t) {
+    var box2 = { min0: 1, max0: 1, min1: 0, max1: 0, min2: 0, max2: 0 },
+        box0 = { min0: 2, max0: 3, min1: 2, max1: 3, min2: 0, max2: 0 },
+        box1 = { min0: 3, max0: 2, min1: 3, max1: 2, min2: 0, max2: 0 },
+        vec0 = new Vector('.min0', '.max0'),
+        vec1 = new Vector('.min1', '.max1'),
+        vec2 = new Vector('.min2', '.max2'),
+        node0 = new Node([vec0, vec1, vec2], [box0, box1, box2])
+
+    t.same(node0._chooseSplitAxis(), vec1)
+    t.comment('Split index at ' + node0._chooseSplitIndex([box0, box1, box2], vec1))
 
     t.end()
 })

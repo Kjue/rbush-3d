@@ -4,7 +4,7 @@ var Node = require('./node.js')
 var Vector = require('./vector.js')
 
 class rbushen {
-    constructor(maxEntries, format) {
+    constructor(maxEntries, format = []) {
         // Safeguard for developer forgetting new keyword.
         if (!(this instanceof rbushen)) return new rbushen(maxEntries, format)
 
@@ -14,80 +14,40 @@ class rbushen {
 
         // Object properties as undefined, initialized elsewhere.
         // Data is always a Node.
-        this.data = undefined
         this.vectors = []
+
+        // Make sure that format params contains pairs of min-max
+        // Other sanitization is up to user
+        if (format.length % 2 != 0) return
+
+        for (let i = 0; i < format.length / 2; i++) {
+            this.vectors.push(new Vector(format[2 * i], format[2 * i + 1]))
+        }
+
+        this.clear()
     }
 
-    // ************** PUBLIC METHODS ******************
-
     clear() {
-        this.data = new Node()
+        this._root = new Node(this.vectors, [new Node(this.vectors)])
+        this._root.leaf = false
         return this
     }
 
-    _initFormat(format) {
-        // data format (min0, max0, min1, max1, min2, max2 accessors)
-        // format altered to make way for enumerated min-max-accessors
-        // i.e. format = ['.min0', '.max0', ...] to satisfy accessors
+    pushVector(vector) {
+        this.vectors.push(vector)
+    }
 
-        // uses eval-type function compilation instead of just accepting a toBBox function
-        // because the algorithms are very sensitive to sorting functions performance,
-        // so they should be dead simple and without inner calls
+    unshiftVector(vector) {
+        this.vectors.unshift(vector)
+    }
 
-        var compareArr = ['return a', ' - b', ';']
-
-        var bboxFunc = 'return {'
-        this.compareVectors = []
-        format.forEach((vector, index) => {
-            this.compareVectors.push(new Function('a', 'b', compareArr.join(vector)))
-            bboxFunc +=
-                (!index ? '' : ', ') +
-                (index % 2 ? 'max' : 'min') +
-                Math.floor(index / 2) +
-                ': a' +
-                vector
-        })
-        bboxFunc += '};'
-
-        this.compareMinX = new Function('a', 'b', compareArr.join(format[0]))
-        this.compareMinY = new Function('a', 'b', compareArr.join(format[2]))
-        this.compareMinZ = new Function('a', 'b', compareArr.join(format[4]))
-
-        this.toBBox = new Function('a', bboxFunc)
-
-        this.vectors.push(new Vector())
+    clearVectors() {
+        while (this.vectors.length) this.vectors.shift()
     }
 
     insert(item) {
-        if (item) this._insert(item, this.data.height - 1)
+        if (item) this._root.insert(item, [this._root])
         return this
-    }
-
-    // ************** PRIVATE METHODS ******************
-
-    _insert(item, level, isNode) {
-        var toBBox = this.toBBox,
-            bbox = isNode ? item : toBBox(item),
-            insertPath = []
-
-        // find the best node for accommodating the item, saving all nodes along the path too
-        var node = this._chooseSubtree(bbox, this.data, level, insertPath)
-
-        // put the item into the node
-        node.children.push(item)
-        // extend(node, bbox);
-        node.extend(bbox)
-
-        // split on node overflow; propagate upwards if necessary
-        while (level >= 0) {
-            if (insertPath[level].children.length > this._maxEntries) {
-                this._split(insertPath, level)
-                level--
-            } else break
-        }
-
-        // adjust bboxes along the insertion path
-        this._adjustParentBBoxes(bbox, insertPath, level)
     }
 }
 
