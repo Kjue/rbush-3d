@@ -154,6 +154,8 @@ var emptyData = [
     [-Infinity, Infinity, -Infinity, Infinity, -Infinity, Infinity]
 ].map(arrToBBox)
 
+console.time('unit testing framework')
+
 t('vector getters always return values', function(t) {
     var box1 = { min0: -2 },
         box2 = { max0: 1 },
@@ -369,8 +371,6 @@ t('bush insert works', function(t) {
     data.forEach((item) => {
         bush.insert(item)
     })
-
-    console.log(JSON.stringify(bush, null, '\t'))
 
     t.end()
 })
@@ -802,3 +802,5 @@ t('node split axis works', function(t) {
 //     });
 //     t.end();
 // });
+
+console.timeEnd('unit testing framework')

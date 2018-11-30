@@ -234,14 +234,12 @@ class Node {
         // If balanced, just return
         if (this.children.length <= this.maxlength) return
         var newNode = new Node(this.vectors, [], this.maxlength),
-            items = [...this.children],
-            vector = this._chooseSplitAxis(items),
-            index = this._chooseSplitIndex(items, vector),
+            vector = this._chooseSplitAxis(this.children),
+            index = this._chooseSplitIndex(this.children, vector),
             nodeIndex = path.findIndex((v) => v == this)
 
-        this.children = items.splice(0, index)
+        newNode.children = this.children.splice(0, index)
         this._bbox = this.calcBBox()
-        newNode.children = items
         newNode._bbox = newNode.calcBBox()
         path[nodeIndex - 1].children.push(newNode)
         path[nodeIndex - 1]._bbox = path[nodeIndex - 1].calcBBox()
@@ -262,12 +260,7 @@ class Node {
      */
     _chooseSplitIndex(items, vector) {
         items.sort((a, b) => vector.min(a) - vector.min(b))
-        items.sort((a, b) => vector.max(a) - vector.max(b))
-        var min = vector.min(items[0]),
-            max = vector.max(items[items.length - 1]),
-            split = (max - min) / 2
-
-        return items.findIndex((a) => vector.min(a) > split)
+        return this.maxlength / 2 - 1
     }
 
     insert_(item, path = [], parentVolume = this.volume(), level = this.height - 1) {
