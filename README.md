@@ -4,7 +4,9 @@ RBushen is N-dimensional version of [RBush](https://github.com/mourner/rbush). I
 
 ## Work-in-progress
 
-This project is a work-in-progress. I was inspired by the RBush-3d that implemented one more dimension to the 2D version. I thought it useful to allow for as many dimensions as one might want. I am thinking of adding Parallel.js to this mix too, but first things first. I'm switching XYZ parameters to be free variables and calling them just indexed vectors. I intend the usage to follow that of the previous examples.
+This project is a work-in-progress. I was inspired by the RBush-3d that implemented one more dimension to the 2D version. I thought it useful to allow for as many dimensions as one might want. I am thinking of adding Parallel.js to this mix too, but first things first. I'm switching XYZ parameters to be free variables and calling them just indexed vectors. I intend the usage paradigm to follow the same lines as before.
+
+This work has not progressed since 2018 mostly because I found a workaround on my 3D environment that enabled me to achieve the performance I wanted. That did still not mean this indexing mechanism was obsolete. Rather that the use case is different.
 
 ## Usage
 
@@ -28,13 +30,13 @@ Insert an item:
 
 ```js
 var item = {
-    minX: 20,
-    minY: 40,
-    minZ: 60,
-    maxX: 30,
-    maxY: 50,
-    maxZ: 70,
-    foo: 'bar'
+  minX: 20,
+  minY: 40,
+  minZ: 60,
+  maxX: 30,
+  maxY: 50,
+  maxZ: 70,
+  foo: "bar"
 };
 tree.insert(item);
 ```
@@ -53,7 +55,7 @@ which is useful when you only have a copy of the object you need removed (e.g. l
 
 ```js
 tree.remove(itemCopy, function(a, b) {
-    return a.id === b.id;
+  return a.id === b.id;
 });
 ```
 
@@ -71,7 +73,7 @@ You can customize this by providing an array with corresponding accessor strings
 as a second argument to `rbushen` like this:
 
 ```js
-var tree = rbushen(16, ['[0]', '[1]', '[2]', '[0]', '[1]', '[2]']); // accept [x, y, z] points
+var tree = rbushen(16, ["[0]", "[1]", "[2]", "[0]", "[1]", "[2]"]); // accept [x, y, z] points
 tree.insert([20, 50, 80]);
 ```
 
@@ -98,12 +100,12 @@ but makes query performance worse if the data is scattered.
 
 ```js
 var result = tree.search({
-    minX: 40,
-    minY: 20,
-    minZ: 50,
-    maxX: 80,
-    maxY: 70,
-    maxZ: 90
+  minX: 40,
+  minY: 20,
+  minZ: 50,
+  maxX: 80,
+  maxY: 70,
+  maxZ: 90
 });
 ```
 
@@ -122,12 +124,12 @@ Returns all items of the tree.
 
 ```js
 var result = tree.collides({
-    minX: 40,
-    minY: 20,
-    minZ: 50,
-    maxX: 80,
-    maxY: 70,
-    maxZ: 90
+  minX: 40,
+  minY: 20,
+  minZ: 50,
+  maxX: 80,
+  maxY: 70,
+  maxZ: 90
 });
 ```
 
@@ -168,19 +170,19 @@ TODO: Need to update benchmarking results.
 
 ## Algorithms Used
 
--   single insertion: non-recursive R-tree insertion with overlap minimizing split routine from R\*-tree (split is very effective in JS, while other R\*-tree modifications like reinsertion on overflow and overlap minimizing subtree search are too slow and not worth it)
--   single deletion: non-recursive R-tree deletion using depth-first tree traversal with free-at-empty strategy (entries in underflowed nodes are not reinserted, instead underflowed nodes are kept in the tree and deleted only when empty, which is a good compromise of query vs removal performance)
--   bulk loading: OMT algorithm (Overlap Minimizing Top-down Bulk Loading) combined with Floyd–Rivest selection algorithm
--   bulk insertion: STLT algorithm (Small-Tree-Large-Tree)
--   search: standard non-recursive R-tree search
+- single insertion: non-recursive R-tree insertion with overlap minimizing split routine from R\*-tree (split is very effective in JS, while other R\*-tree modifications like reinsertion on overflow and overlap minimizing subtree search are too slow and not worth it)
+- single deletion: non-recursive R-tree deletion using depth-first tree traversal with free-at-empty strategy (entries in underflowed nodes are not reinserted, instead underflowed nodes are kept in the tree and deleted only when empty, which is a good compromise of query vs removal performance)
+- bulk loading: OMT algorithm (Overlap Minimizing Top-down Bulk Loading) combined with Floyd–Rivest selection algorithm
+- bulk insertion: STLT algorithm (Small-Tree-Large-Tree)
+- search: standard non-recursive R-tree search
 
 ## Papers
 
--   [R-trees: a Dynamic Index Structure For Spatial Searching](http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf)
--   [The R\*-tree: An Efficient and Robust Access Method for Points and Rectangles+](http://dbs.mathematik.uni-marburg.de/publications/myPapers/1990/BKSS90.pdf)
--   [OMT: Overlap Minimizing Top-down Bulk Loading Algorithm for R-tree](http://ftp.informatik.rwth-aachen.de/Publications/CEUR-WS/Vol-74/files/FORUM_18.pdf)
--   [Bulk Insertions into R-Trees Using the Small-Tree-Large-Tree Approach](http://www.cs.arizona.edu/~bkmoon/papers/dke06-bulk.pdf)
--   [R-Trees: Theory and Applications (book)](http://www.apress.com/9781852339777)
+- [R-trees: a Dynamic Index Structure For Spatial Searching](http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf)
+- [The R\*-tree: An Efficient and Robust Access Method for Points and Rectangles+](http://dbs.mathematik.uni-marburg.de/publications/myPapers/1990/BKSS90.pdf)
+- [OMT: Overlap Minimizing Top-down Bulk Loading Algorithm for R-tree](http://ftp.informatik.rwth-aachen.de/Publications/CEUR-WS/Vol-74/files/FORUM_18.pdf)
+- [Bulk Insertions into R-Trees Using the Small-Tree-Large-Tree Approach](http://www.cs.arizona.edu/~bkmoon/papers/dke06-bulk.pdf)
+- [R-Trees: Theory and Applications (book)](http://www.apress.com/9781852339777)
 
 ## Development
 
